@@ -124,28 +124,59 @@ void read_png_file(char* file_name)
   
   pixels = (uint32_t*) malloc(width * height * sizeof(uint32_t));
   
-  if (!pixels)
+  if (!pixels) {
     abort_("[read_png_file] could not allocate %d bytes to store pixel data", (width * height * sizeof(uint32_t)));
+  }
   
   int pixeli = 0;
   
+  int isBGRA = 0;
+  
+  if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGBA) {
+    isBGRA = 1;
+  } else if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGB) {
+    isBGRA = 0;
+  } else {
+    abort_("[read_png_file] unsupported input format type");
+  }
+  
   for (y=0; y<height; y++) {
     png_byte* row = row_pointers[y];
-    for (x=0; x<width; x++) {
-      png_byte* ptr = &(row[x*4]);
-      
-      uint32_t B = ptr[2];
-      uint32_t G = ptr[1];
-      uint32_t R = ptr[0];
-      uint32_t A = ptr[3];
-      
-      uint32_t pixel = (A << 24) | (R << 16) | (G << 8) | B;
-      
-      fprintf(stdout, "Read pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
-      
-      pixels[pixeli] = pixel;
-      
-      pixeli++;
+    
+    if (isBGRA) {
+      for (x=0; x<width; x++) {
+        png_byte* ptr = &(row[x*4]);
+        
+        uint32_t B = ptr[2];
+        uint32_t G = ptr[1];
+        uint32_t R = ptr[0];
+        uint32_t A = ptr[3];
+        
+        uint32_t pixel = (A << 24) | (R << 16) | (G << 8) | B;
+        
+        fprintf(stdout, "Read pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        
+        pixels[pixeli] = pixel;
+        
+        pixeli++;
+      }
+    } else {
+      // BGR with no alpha channel
+      for (x=0; x<width; x++) {
+        png_byte* ptr = &(row[x*3]);
+        
+        uint32_t B = ptr[2];
+        uint32_t G = ptr[1];
+        uint32_t R = ptr[0];
+        
+        uint32_t pixel = (0xFF << 24) | (R << 16) | (G << 8) | B;
+        
+        fprintf(stdout, "Read pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        
+        pixels[pixeli] = pixel;
+        
+        pixeli++;
+      }
     }
   }
   
@@ -193,28 +224,59 @@ void write_png_file(char* file_name)
   
   allocate_row_pointers();
   
+  int isBGRA = 0;
+  
+  if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGBA) {
+    isBGRA = 1;
+  } else if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGB) {
+    isBGRA = 0;
+  } else {
+    abort_("[write_png_file] unsupported input format type");
+  }
+  
   int pixeli = 0;
   
   for (y=0; y<height; y++) {
     png_byte* row = row_pointers[y];
-    for (x=0; x<width; x++) {
-      png_byte* ptr = &(row[x*4]);
-      
-      uint32_t pixel = pixels[pixeli];
-      
-      uint32_t B = pixel & 0xFF;
-      uint32_t G = (pixel >> 8) & 0xFF;
-      uint32_t R = (pixel >> 16) & 0xFF;
-      uint32_t A = (pixel >> 24) & 0xFF;
-      
-      ptr[0] = R;
-      ptr[1] = G;
-      ptr[2] = B;
-      ptr[3] = A;
-      
-      fprintf(stdout, "Wrote pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
-      
-      pixeli++;
+    
+    if (isBGRA) {
+      for (x=0; x<width; x++) {
+        png_byte* ptr = &(row[x*4]);
+        
+        uint32_t pixel = pixels[pixeli];
+        
+        uint32_t B = pixel & 0xFF;
+        uint32_t G = (pixel >> 8) & 0xFF;
+        uint32_t R = (pixel >> 16) & 0xFF;
+        uint32_t A = (pixel >> 24) & 0xFF;
+        
+        ptr[0] = R;
+        ptr[1] = G;
+        ptr[2] = B;
+        ptr[3] = A;
+        
+        fprintf(stdout, "Wrote pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        
+        pixeli++;
+      }
+    } else {
+      for (x=0; x<width; x++) {
+        png_byte* ptr = &(row[x*3]);
+        
+        uint32_t pixel = pixels[pixeli];
+        
+        uint32_t B = pixel & 0xFF;
+        uint32_t G = (pixel >> 8) & 0xFF;
+        uint32_t R = (pixel >> 16) & 0xFF;
+        
+        ptr[0] = R;
+        ptr[1] = G;
+        ptr[2] = B;
+        
+        fprintf(stdout, "Wrote pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        
+        pixeli++;
+      }
     }
   }
   
@@ -235,13 +297,6 @@ void write_png_file(char* file_name)
 
 void process_file(void)
 {
-//  if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGB)
-//    abort_("[process_file] input file is PNG_COLOR_TYPE_RGB but must be PNG_COLOR_TYPE_RGBA "
-//           "(lacks the alpha channel)");
-  
-  if (png_get_color_type(png_ptr, info_ptr) != PNG_COLOR_TYPE_RGBA)
-    abort_("[process_file] color_type of input file must be PNG_COLOR_TYPE_RGBA (%d) (is %d)",
-           PNG_COLOR_TYPE_RGBA, png_get_color_type(png_ptr, info_ptr));
   
 //  for (y=0; y<height; y++) {
 //    png_byte* row = row_pointers[y];
