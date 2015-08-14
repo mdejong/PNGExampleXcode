@@ -34,7 +34,44 @@ png_byte bit_depth;
 png_structp png_ptr;
 png_infop info_ptr;
 int number_of_passes;
-png_bytep * row_pointers;
+png_bytep * row_pointers = NULL;
+
+// BGR or BGRA data will be read into this buffer of pixels
+
+uint32_t *pixels = NULL;
+
+void allocate_row_pointers()
+{
+  if (row_pointers != NULL) {
+    abort_("[allocate_row_pointers] row_pointers already allocated");
+  }
+  
+  row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * height);
+  
+  if (!row_pointers) {
+    abort_("[allocate_row_pointers] could not allocate %d bytes to store row data", (sizeof(png_bytep) * height));
+  }
+  
+  for (y=0; y<height; y++) {
+    row_pointers[y] = (png_byte*) malloc(png_get_rowbytes(png_ptr,info_ptr));
+    
+    if (!row_pointers[y]) {
+      abort_("[allocate_row_pointers] could not allocate %d bytes to store row data", png_get_rowbytes(png_ptr,info_ptr));
+    }
+  }
+}
+
+void free_row_pointers()
+{
+  if (row_pointers == NULL) {
+    return;
+  }
+  
+  for (y=0; y<height; y++)
+    free(row_pointers[y]);
+  free(row_pointers);
+  row_pointers = NULL;
+}
 
 void read_png_file(char* file_name)
 {
@@ -79,13 +116,42 @@ void read_png_file(char* file_name)
   if (setjmp(png_jmpbuf(png_ptr)))
     abort_("[read_png_file] Error during read_image");
   
-  row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * height);
-  for (y=0; y<height; y++)
-    row_pointers[y] = (png_byte*) malloc(png_get_rowbytes(png_ptr,info_ptr));
+  allocate_row_pointers();
   
   png_read_image(png_ptr, row_pointers);
   
+  /* allocate pixels data and read into array of pixels */
+  
+  pixels = (uint32_t*) malloc(width * height * sizeof(uint32_t));
+  
+  if (!pixels)
+    abort_("[read_png_file] could not allocate %d bytes to store pixel data", (width * height * sizeof(uint32_t)));
+  
+  int pixeli = 0;
+  
+  for (y=0; y<height; y++) {
+    png_byte* row = row_pointers[y];
+    for (x=0; x<width; x++) {
+      png_byte* ptr = &(row[x*4]);
+      
+      uint32_t B = ptr[2];
+      uint32_t G = ptr[1];
+      uint32_t R = ptr[0];
+      uint32_t A = ptr[3];
+      
+      uint32_t pixel = (A << 24) | (R << 16) | (G << 8) | B;
+      
+      fprintf(stdout, "Read pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+      
+      pixels[pixeli] = pixel;
+      
+      pixeli++;
+    }
+  }
+  
   fclose(fp);
+  
+  free_row_pointers();
 }
 
 
@@ -123,8 +189,35 @@ void write_png_file(char* file_name)
   
   png_write_info(png_ptr, info_ptr);
   
+  /* write pixels back to row_pointers */
   
-  /* write bytes */
+  allocate_row_pointers();
+  
+  int pixeli = 0;
+  
+  for (y=0; y<height; y++) {
+    png_byte* row = row_pointers[y];
+    for (x=0; x<width; x++) {
+      png_byte* ptr = &(row[x*4]);
+      
+      uint32_t pixel = pixels[pixeli];
+      
+      uint32_t B = pixel & 0xFF;
+      uint32_t G = (pixel >> 8) & 0xFF;
+      uint32_t R = (pixel >> 16) & 0xFF;
+      uint32_t A = (pixel >> 24) & 0xFF;
+      
+      ptr[0] = R;
+      ptr[1] = G;
+      ptr[2] = B;
+      ptr[3] = A;
+      
+      fprintf(stdout, "Wrote pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+      
+      pixeli++;
+    }
+  }
+  
   if (setjmp(png_jmpbuf(png_ptr)))
     abort_("[write_png_file] Error during writing bytes");
   
@@ -137,36 +230,40 @@ void write_png_file(char* file_name)
   
   png_write_end(png_ptr, NULL);
   
-  /* cleanup heap allocation */
-  for (y=0; y<height; y++)
-    free(row_pointers[y]);
-  free(row_pointers);
-  
   fclose(fp);
 }
 
 void process_file(void)
 {
-  if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGB)
-    abort_("[process_file] input file is PNG_COLOR_TYPE_RGB but must be PNG_COLOR_TYPE_RGBA "
-           "(lacks the alpha channel)");
+//  if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGB)
+//    abort_("[process_file] input file is PNG_COLOR_TYPE_RGB but must be PNG_COLOR_TYPE_RGBA "
+//           "(lacks the alpha channel)");
   
   if (png_get_color_type(png_ptr, info_ptr) != PNG_COLOR_TYPE_RGBA)
     abort_("[process_file] color_type of input file must be PNG_COLOR_TYPE_RGBA (%d) (is %d)",
            PNG_COLOR_TYPE_RGBA, png_get_color_type(png_ptr, info_ptr));
   
-  for (y=0; y<height; y++) {
-    png_byte* row = row_pointers[y];
-    for (x=0; x<width; x++) {
-      png_byte* ptr = &(row[x*4]);
-      printf("Pixel at position [ %d - %d ] has RGBA values: %d - %d - %d - %d\n",
-             x, y, ptr[0], ptr[1], ptr[2], ptr[3]);
-      
-      /* set red value to 0 and green value to the blue one */
-      ptr[0] = 0;
-      ptr[1] = ptr[2];
-    }
-  }
+//  for (y=0; y<height; y++) {
+//    png_byte* row = row_pointers[y];
+//    for (x=0; x<width; x++) {
+//      png_byte* ptr = &(row[x*4]);
+//      printf("Pixel at position [ %d - %d ] has RGBA values: %d - %d - %d - %d\n",
+//             x, y, ptr[0], ptr[1], ptr[2], ptr[3]);
+//      
+//      /* set red value to 0 and green value to the blue one */
+//      ptr[0] = 0;
+//      ptr[1] = ptr[2];
+//    }
+//  }
+}
+
+/* deallocate memory */
+
+void cleanup()
+{
+  free_row_pointers();
+  
+  free(pixels);
 }
 
 int main(int argc, char **argv)
@@ -178,6 +275,10 @@ int main(int argc, char **argv)
   read_png_file(argv[1]);
   process_file();
   write_png_file(argv[2]);
+  
+  cleanup();
+  
+  printf("success\n");
   
   return 0;
 }
