@@ -113,6 +113,9 @@ void read_png_file(char* file_name)
   number_of_passes = png_set_interlace_handling(png_ptr);
   png_read_update_info(png_ptr, info_ptr);
   
+  if (bit_depth != 8) {
+    abort_("[read_png_file] only 8 bit pixel depth PNG is supported");
+  }
   
   /* read file */
   if (setjmp(png_jmpbuf(png_ptr)))
@@ -133,11 +136,14 @@ void read_png_file(char* file_name)
   int pixeli = 0;
   
   int isBGRA = 0;
+  int isGrayscale = 0;
   
   if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGBA) {
     isBGRA = 1;
   } else if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGB) {
     isBGRA = 0;
+  } else if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY) {
+    isGrayscale = 1;
   } else {
     abort_("[read_png_file] unsupported input format type");
   }
@@ -145,7 +151,22 @@ void read_png_file(char* file_name)
   for (y=0; y<height; y++) {
     png_byte* row = row_pointers[y];
     
-    if (isBGRA) {
+    if (isGrayscale) {
+      for (x=0; x<width; x++) {
+        png_byte* ptr = &(row[x]);
+        
+        uint32_t gray = ptr[0];
+        uint32_t pixel = (0xFF << 24) | (gray << 16) | (gray << 8) | gray;
+        
+        if (debugPrintPixelsReadAndWritten) {
+          fprintf(stdout, "Read pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        }
+        
+        pixels[pixeli] = pixel;
+        
+        pixeli++;
+      }
+    } else if (isBGRA) {
       for (x=0; x<width; x++) {
         png_byte* ptr = &(row[x*4]);
         
@@ -231,11 +252,14 @@ void write_png_file(char* file_name)
   allocate_row_pointers();
   
   int isBGRA = 0;
+  int isGrayscale = 0;
   
   if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGBA) {
     isBGRA = 1;
   } else if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGB) {
     isBGRA = 0;
+  } else if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_GRAY) {
+    isGrayscale = 1;
   } else {
     abort_("[write_png_file] unsupported input format type");
   }
@@ -245,7 +269,23 @@ void write_png_file(char* file_name)
   for (y=0; y<height; y++) {
     png_byte* row = row_pointers[y];
     
-    if (isBGRA) {
+    if (isGrayscale) {
+      for (x=0; x<width; x++) {
+        png_byte* ptr = &(row[x]);
+        
+        uint32_t pixel = pixels[pixeli];
+        
+        uint32_t gray = pixel & 0xFF;
+        
+        ptr[0] = gray;
+        
+        if (debugPrintPixelsReadAndWritten) {
+          fprintf(stdout, "Wrote pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        }
+        
+        pixeli++;
+      }
+    } else if (isBGRA) {
       for (x=0; x<width; x++) {
         png_byte* ptr = &(row[x*4]);
         
@@ -318,7 +358,7 @@ void process_file(void)
     uint32_t R = (pixel >> 16) & 0xFF;
     uint32_t A = (pixel >> 24) & 0xFF;
     
-    // Swap B and R channels
+    // Swap B and R channels, a grayscale image will not be modified
     
     if ((1)) {
       uint32_t tmp = B;
@@ -344,7 +384,7 @@ void cleanup()
 int main(int argc, char **argv)
 {
   if (argc != 3) {
-    abort_("Usage: %s <file_in> <file_out>", argv[0]);
+    abort_("Usage: %s <in_png> <out_png>", argv[0]);
   }
   
   read_png_file(argv[1]);
