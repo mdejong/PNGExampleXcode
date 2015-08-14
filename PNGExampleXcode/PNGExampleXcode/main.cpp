@@ -45,9 +45,8 @@ void read_png_file(char* file_name)
   if (!fp)
     abort_("[read_png_file] File %s could not be opened for reading", file_name);
   fread(header, 1, 8, fp);
-  if (png_sig_cmp(header, 0, 8))
+  if (png_sig_cmp((png_const_bytep)header, 0, 8))
     abort_("[read_png_file] File %s is not recognized as a PNG file", file_name);
-  
   
   /* initialize stuff */
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -146,7 +145,6 @@ void write_png_file(char* file_name)
   fclose(fp);
 }
 
-
 void process_file(void)
 {
   if (png_get_color_type(png_ptr, info_ptr) == PNG_COLOR_TYPE_RGB)
@@ -171,11 +169,11 @@ void process_file(void)
   }
 }
 
-
 int main(int argc, char **argv)
 {
-  if (argc != 3)
-    abort_("Usage: program_name <file_in> <file_out>");
+  if (argc != 3) {
+    abort_("Usage: %s <file_in> <file_out>", argv[0]);
+  }
   
   read_png_file(argv[1]);
   process_file();

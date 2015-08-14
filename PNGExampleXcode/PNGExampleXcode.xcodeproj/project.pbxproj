@@ -18,12 +18,12 @@
 		3C67D1A31B7E76B8002540AF /* pngrtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D1921B7E76B8002540AF /* pngrtran.c */; };
 		3C67D1A41B7E76B8002540AF /* pngrutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D1931B7E76B8002540AF /* pngrutil.c */; };
 		3C67D1A51B7E76B8002540AF /* pngset.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D1941B7E76B8002540AF /* pngset.c */; };
-		3C67D1A61B7E76B8002540AF /* pngtest.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D1961B7E76B8002540AF /* pngtest.c */; };
 		3C67D1A71B7E76B8002540AF /* pngtrans.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D1971B7E76B8002540AF /* pngtrans.c */; };
 		3C67D1A81B7E76B8002540AF /* pngwio.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D1981B7E76B8002540AF /* pngwio.c */; };
 		3C67D1A91B7E76B8002540AF /* pngwrite.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D1991B7E76B8002540AF /* pngwrite.c */; };
 		3C67D1AA1B7E76B8002540AF /* pngwtran.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D19A1B7E76B8002540AF /* pngwtran.c */; };
 		3C67D1AB1B7E76B8002540AF /* pngwutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 3C67D19B1B7E76B8002540AF /* pngwutil.c */; };
+		3C67D1AE1B7E78CC002540AF /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3C67D1AD1B7E78CC002540AF /* libz.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -57,13 +57,13 @@
 		3C67D1931B7E76B8002540AF /* pngrutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngrutil.c; sourceTree = "<group>"; };
 		3C67D1941B7E76B8002540AF /* pngset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngset.c; sourceTree = "<group>"; };
 		3C67D1951B7E76B8002540AF /* pngstruct.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pngstruct.h; sourceTree = "<group>"; };
-		3C67D1961B7E76B8002540AF /* pngtest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngtest.c; sourceTree = "<group>"; };
 		3C67D1971B7E76B8002540AF /* pngtrans.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngtrans.c; sourceTree = "<group>"; };
 		3C67D1981B7E76B8002540AF /* pngwio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwio.c; sourceTree = "<group>"; };
 		3C67D1991B7E76B8002540AF /* pngwrite.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwrite.c; sourceTree = "<group>"; };
 		3C67D19A1B7E76B8002540AF /* pngwtran.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwtran.c; sourceTree = "<group>"; };
 		3C67D19B1B7E76B8002540AF /* pngwutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = pngwutil.c; sourceTree = "<group>"; };
 		3C67D1AC1B7E76F2002540AF /* pnglibconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = pnglibconf.h; sourceTree = "<group>"; };
+		3C67D1AD1B7E78CC002540AF /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +71,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3C67D1AE1B7E78CC002540AF /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -81,6 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				3C67D17D1B7E757F002540AF /* PNGExampleXcode */,
+				3C67D1AD1B7E78CC002540AF /* libz.dylib */,
 				3C67D17C1B7E757F002540AF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -122,7 +124,6 @@
 				3C67D1931B7E76B8002540AF /* pngrutil.c */,
 				3C67D1941B7E76B8002540AF /* pngset.c */,
 				3C67D1951B7E76B8002540AF /* pngstruct.h */,
-				3C67D1961B7E76B8002540AF /* pngtest.c */,
 				3C67D1971B7E76B8002540AF /* pngtrans.c */,
 				3C67D1981B7E76B8002540AF /* pngwio.c */,
 				3C67D1991B7E76B8002540AF /* pngwrite.c */,
@@ -204,7 +205,6 @@
 				3C67D1AA1B7E76B8002540AF /* pngwtran.c in Sources */,
 				3C67D1A41B7E76B8002540AF /* pngrutil.c in Sources */,
 				3C67D1A11B7E76B8002540AF /* pngread.c in Sources */,
-				3C67D1A61B7E76B8002540AF /* pngtest.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -321,6 +321,7 @@
 				3C67D1841B7E7580002540AF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
