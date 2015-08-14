@@ -40,6 +40,8 @@ png_bytep * row_pointers = NULL;
 
 uint32_t *pixels = NULL;
 
+const int debugPrintPixelsReadAndWritten = 0;
+
 void allocate_row_pointers()
 {
   if (row_pointers != NULL) {
@@ -154,7 +156,9 @@ void read_png_file(char* file_name)
         
         uint32_t pixel = (A << 24) | (R << 16) | (G << 8) | B;
         
+        if (debugPrintPixelsReadAndWritten) {
         fprintf(stdout, "Read pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        }
         
         pixels[pixeli] = pixel;
         
@@ -171,7 +175,9 @@ void read_png_file(char* file_name)
         
         uint32_t pixel = (0xFF << 24) | (R << 16) | (G << 8) | B;
         
+        if (debugPrintPixelsReadAndWritten) {
         fprintf(stdout, "Read pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        }
         
         pixels[pixeli] = pixel;
         
@@ -255,7 +261,9 @@ void write_png_file(char* file_name)
         ptr[2] = B;
         ptr[3] = A;
         
+        if (debugPrintPixelsReadAndWritten) {
         fprintf(stdout, "Wrote pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        }
         
         pixeli++;
       }
@@ -273,7 +281,9 @@ void write_png_file(char* file_name)
         ptr[1] = G;
         ptr[2] = B;
         
+        if (debugPrintPixelsReadAndWritten) {
         fprintf(stdout, "Wrote pixel 0x%08X at (x,y) (%d, %d)\n", pixel, x, y);
+        }
         
         pixeli++;
       }
@@ -297,19 +307,29 @@ void write_png_file(char* file_name)
 
 void process_file(void)
 {
+  // Swap the B and R channels in the BGRA format pixels
   
-//  for (y=0; y<height; y++) {
-//    png_byte* row = row_pointers[y];
-//    for (x=0; x<width; x++) {
-//      png_byte* ptr = &(row[x*4]);
-//      printf("Pixel at position [ %d - %d ] has RGBA values: %d - %d - %d - %d\n",
-//             x, y, ptr[0], ptr[1], ptr[2], ptr[3]);
-//      
-//      /* set red value to 0 and green value to the blue one */
-//      ptr[0] = 0;
-//      ptr[1] = ptr[2];
-//    }
-//  }
+  int numPixels = width * height;
+  
+  for ( int i = 0; i < numPixels; i++) {
+    uint32_t pixel = pixels[i];
+    uint32_t B = pixel & 0xFF;
+    uint32_t G = (pixel >> 8) & 0xFF;
+    uint32_t R = (pixel >> 16) & 0xFF;
+    uint32_t A = (pixel >> 24) & 0xFF;
+    
+    // Swap B and R channels
+    
+    if ((1)) {
+      uint32_t tmp = B;
+      B = R;
+      R = tmp;
+    }
+   
+    uint32_t outPixel = (A << 24) | (R << 16) | (G << 8) | B;
+    
+    pixels[i] = outPixel;
+  }
 }
 
 /* deallocate memory */
@@ -333,7 +353,7 @@ int main(int argc, char **argv)
   
   cleanup();
   
-  printf("success\n");
+  printf("success processing %d pixels from image of dimensions %d x %d\n", width*height, width, height);
   
   return 0;
 }
